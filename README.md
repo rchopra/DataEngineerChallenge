@@ -1,63 +1,59 @@
-# DataEngineerChallenge
+## Overview
 
-This is an interview challenge for PayPay. Please feel free to fork. Pull Requests will be ignored.
+I approached this problem more like what one would see in a Jupyter notebook and less like "productionalizing" an ETL as the task seemed more exploratory in nature. That and I think it's a bit easier to follow that way than breaking it into a bunch of tiny classes.
 
-The challenge is to make make analytical observations about the data using the distributed tools below.
+The technology used here is Spark via Java. Scala of course would be better, but at my current company we write most of our Spark code in Java and that's what I'm most comfortable with at the moment.
 
-## Processing & Analytical goals:
+My intent was to structure the analysis as a straightforward series of transformations, where it's easy to see what's happening at each step. These transformations are:
+1. **Load**: load the original data file
+2. **Clean**: parse the original data frame and pull it some fields (IPs, endpoints) useful for later analysis
+3. **Sessionize**: this is the first interesting transformation, as this does the calculation of sessions via window functions.
+4. **Aggregate**: the aggregations are run on the sessionized data frame to calculate session metrics like length and unique visits.
+5. **Analyze**: answer the questions from the prompt and print the output
 
-1. Sessionize the web log by IP. Sessionize = aggregrate all page hits by visitor/IP during a session.
-    https://en.wikipedia.org/wiki/Session_(web_analytics)
+The tests were written to support this flow and test the correctness of these transformations.
 
-2. Determine the average session time
+## Build and Run Instructions
 
-3. Determine unique URL visits per session. To clarify, count a hit to a unique URL only once per session.
+This is a maven project. To build the jar:
+```sh
+mvn clean compile assembly:single
+```
 
-4. Find the most engaged users, ie the IPs with the longest session times
+This should put the artifact in the `target/` directory. To run:
+```sh
+java -jar target/DataEngineerChallenge-1.0-SNAPSHOT-jar-with-dependencies.jar
+```
 
-## Additional questions for Machine Learning Engineer (MLE) candidates:
-1. Predict the expected load (requests/second) in the next minute
+To run tests:
+```sh
+mvn test
+```
 
-2. Predict the session length for a given IP
+## Answers to Analysis Questions
 
-3. Predict the number of unique URL visits by a given IP
+Answers are based on a 15-minute inactivity threshold.
 
-## Tools allowed (in no particular order):
-- Spark (any language, but prefer Scala or Java)
-- Pig
-- MapReduce (Hadoop 2.x only)
-- Flink
-- Cascading, Cascalog, or Scalding
+1. Average session time (seconds): 100.73
+2. Unique visits per session: 8.04
+3. Most engaged users:
 
-If you need Hadoop, we suggest 
-HDP Sandbox:
-http://hortonworks.com/hdp/downloads/
-or 
-CDH QuickStart VM:
-http://www.cloudera.com/content/cloudera/en/downloads.html
+| client_ip      | session_length_seconds |
+|----------------|-----------------------:|
+| 106.186.23.95  | 2069                   |
+| 52.74.219.71   | 2069                   |
+| 119.81.61.166  | 2069                   |
+| 125.19.44.66   | 2068                   |
+| 125.20.39.66   | 2068                   |
+| 192.8.190.10   | 2067                   |
+| 54.251.151.39  | 2067                   |
+| 180.211.69.209 | 2067                   |
+| 122.15.156.64  | 2066                   |
+| 203.191.34.178 | 2066                   |
 
+## Summary
 
-### Additional notes:
-- You are allowed to use whatever libraries/parsers/solutions you can find provided you can explain the functions you are implementing in detail.
-- IP addresses do not guarantee distinct users, but this is the limitation of the data. As a bonus, consider what additional data would help make better analytical conclusions
-- For this dataset, complete the sessionization by time window rather than navigation. Feel free to determine the best session window time on your own, or start with 15 minutes.
-- The log file was taken from an AWS Elastic Load Balancer:
-http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/access-log-collection.html#access-log-entry-format
+Indeed there were some challenges here. In particular, it was tough to come up with a good heuristic to filter out what were obviously bots scraping the site. I didn't think we wanted to include those in our analysis of sessions, but I could see an argument for it.
+A simple way to do this might be to define a threshold of clicks/second of a session and filter out any sessions with too high a click rate. Another thought I had, and you can see that somewhat implemented, was to label endpoints as "api" or "user". This allows us to filter one or the other out of the dataset and produce metrics accordingly. I believe there's definitely more work to be done here, but I ran out of time before pursuing it further.
 
-
-
-## How to complete this challenge:
-
-1. Fork this repo in github
-2. Complete the processing and analytics as defined first to the best of your ability with the time provided.
-3. Place notes in your code to help with clarity where appropriate. Make it readable enough to present to the PayPay interview team.
-4. Include the test code and data in your solution. 
-5. Complete your work in your own github repo and send the results to us and/or present them during your interview.
-
-## What are we looking for? What does this prove?
-
-We want to see how you handle:
-- New technologies and frameworks
-- Messy (ie real) data
-- Understanding data transformation
-This is not a pass or fail test, we want to hear about your challenges and your successes with this particular problem.
+Overall this was a fun exercise and I enjoyed thinking through it. Thanks again for your time and consideration.
