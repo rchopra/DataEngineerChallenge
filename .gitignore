@@ -1,0 +1,16 @@
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Maven
+log/
+target/
+
+# Gradle
+.gradle/
+
+# Eclipse
+.settings/
+.classpath
+.project
